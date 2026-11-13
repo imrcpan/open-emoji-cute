@@ -1,0 +1,327 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Open Emoji Cute</title>
+<style>
+  :root { --spring: cubic-bezier(.34, 1.56, .64, 1); }
+  body {
+    margin: 0; padding: 48px 24px 320px; background: #ffeaf1; color: #8a4a63;
+    font: 15px system-ui, sans-serif;
+  }
+  main { max-width: 1100px; margin: auto; }
+  h1 { margin: 0; text-align: center; font-size: clamp(34px, 7vw, 72px); line-height: 1.1; font-weight: 800; color: #ff4f86; }
+  .sub { margin: 0 0 48px; text-align: center; font-size: clamp(22px, 3.2vw, 32px); font-weight: 600; color: #7a8090; }
+  .repo { display: block; width: fit-content; margin: 40px auto 26px; max-width: 100%; text-align: center; font-size: clamp(13px, 3.6vw, 28px); font-weight: 600; color: #ff4f86; text-decoration: none; border-bottom: 2px solid #ffb3cd; transition: border-color .2s; }
+  .repo:hover { border-color: #ff4f86; }
+  h2 { margin: 44px 0 14px; font-size: 14px; font-weight: 700; color: #e07aa0; letter-spacing: .1em; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(184px, 1fr)); gap: 16px; }
+
+  figure {
+    margin: 0; box-shadow: 0 4px 0 #ffd0e0; padding: 0; border-radius: 28px; background: #fff;
+    aspect-ratio: 1; display: grid; place-items: center;
+    cursor: pointer; user-select: none;
+    transition: transform .3s var(--spring), box-shadow .3s;
+  }
+  figure:hover { transform: translateY(-4px) scale(1.04); box-shadow: 0 10px 0 #ffc2d8; }
+  figure:active { transform: scale(.94); }
+  /* 待机：轻轻晃动 + 眨眼，每张错开相位 */
+  figure svg { animation: bob 1.8s ease-in-out infinite alternate; animation-delay: var(--d, 0s); }
+  @keyframes bob {
+    from { transform: translateY(3px) rotate(-3deg) scale(1); }
+    to   { transform: translateY(-5px) rotate(3deg) scale(1.04); }
+  }
+  .eyes { transform-box: fill-box; transform-origin: center; animation: blink 3.6s infinite; animation-delay: calc(var(--d, 0s) * 2); }
+  @keyframes blink { 0%, 90%, 100% { transform: scaleY(1); } 94% { transform: scaleY(.08); } }
+  @media (prefers-reduced-motion: reduce) { figure svg, .eyes, .shake, .puke, .spit { animation: none; } }
+  /* 一段连续动画：左右连摆三个来回，中途不回到静止位，只在结尾落回 */
+  /* 恶心：同一个 1.2s 节奏——先后仰蓄力，再猛地向下发力，呕吐物随之喷出，之后回位 */
+  .shake { transform-box: fill-box; transform-origin: 50% 100%; animation: thrust 1.2s cubic-bezier(.5, 0, .5, 1) infinite; }
+  @keyframes thrust {
+    0%, 100% { transform: translateY(0) rotate(0) scale(1); }
+    30%      { transform: translateY(-3px) rotate(-5deg) scale(.97, 1.03); }
+    52%      { transform: translateY(9px) rotate(7deg) scale(1.06, .92); }
+    70%      { transform: translateY(6px) rotate(5deg) scale(1.04, .95); }
+  }
+  .puke { transform-box: fill-box; transform-origin: 50% 0; animation: gush 1.2s cubic-bezier(.5, 0, .5, 1) infinite; }
+  @keyframes gush {
+    0%, 100% { transform: translateY(0) scale(.9, .55); }
+    30%      { transform: translateY(-3px) scale(.85, .4); }
+    52%      { transform: translateY(10px) scale(1.18, 1.1); }
+    75%      { transform: translateY(7px) scale(1.05, 1); }
+  }
+  .spit { animation: spit 1.2s ease-in infinite; opacity: 0; }
+  @keyframes spit {
+    0%, 42% { opacity: 0; transform: translate(0, 0) scale(.6); }
+    52%     { opacity: 1; }
+    100%    { opacity: 0; transform: translate(var(--sx), var(--sy)) scale(1.2); }
+  }
+  figure:hover svg { animation: wobble 1.8s ease-in-out; }
+  @keyframes wobble {
+    0%   { transform: scale(1)    rotate(0); }
+    8%   { transform: scale(1.28) rotate(-12deg); }
+    24%  { transform: scale(1.2)  rotate(10deg); }
+    40%  { transform: scale(1.28) rotate(-12deg); }
+    56%  { transform: scale(1.2)  rotate(10deg); }
+    72%  { transform: scale(1.28) rotate(-12deg); }
+    88%  { transform: scale(1.2)  rotate(10deg); }
+    100% { transform: scale(1)    rotate(0); }
+  }
+  svg { display: block; width: 78%; height: auto; aspect-ratio: 1; overflow: visible; }
+
+  #toast {
+    position: fixed; left: 50%; bottom: 32px; padding: 10px 18px; border-radius: 14px;
+    background: #ff4f86; color: #fff; opacity: 0; transform: translate(-50%, 12px);
+    transition: opacity .2s, transform .3s var(--spring); pointer-events: none;
+  }
+  #toast.on { opacity: 1; transform: translate(-50%, 0); }
+</style>
+
+<main>
+  <h1>Open Emoji Cute</h1>
+  <a class="repo" href="https://github.com/imrcpan/open-emoji-cute" target="_blank" rel="noopener">https://github.com/imrcpan/open-emoji-cute</a>
+  <p class="sub">Apache-2.0</p>
+  <div id="app"></div>
+</main>
+<div id="toast">已复制 SVG</div>
+
+<script>
+  const INK = '#6b3a1e';
+  const HEART = 'M0 10C-15 0 -10 -11 -5 -11C-2 -11 0 -8 0 -7C0 -8 2 -11 5 -11C10 -11 15 0 0 10Z';
+
+  /* ---------- 小工具 ---------- */
+  // extra 里若自带 stroke 就不再输出默认的，避免同一元素出现重复属性（独立 .svg 是严格 XML，重复属性会解析失败）
+  const st = (d, w = 4, extra = '') =>
+    `<path d="${d}" ${extra} fill="none"${/stroke="/.test(extra) ? '' : ` stroke="${INK}"`} stroke-width="${(w * .95).toFixed(2)}" stroke-linecap="round" stroke-linejoin="round"/>`;
+  const at = (x, y, s) => `<g transform="translate(${x} ${y})">${s}<\/g>`;
+  const pair = f => at(35, 45, f(-1)) + at(65, 45, f(1)); // s: 左眼 -1，右眼 1
+  const star = (R, r) => {
+    let d = '';
+    for (let i = 0; i < 10; i++) {
+      const a = -Math.PI / 2 + i * Math.PI / 5, k = i % 2 ? r : R;
+      d += (i ? 'L' : 'M') + (k * Math.cos(a)).toFixed(1) + ' ' + (k * Math.sin(a)).toFixed(1);
+    }
+    return d + 'Z';
+  };
+  const spiral = () => {
+    let d = 'M0 0';
+    for (let t = .3; t <= 15; t += .3) d += `L${(t * .55 * Math.cos(t)).toFixed(1)} ${(t * .55 * Math.sin(t)).toFixed(1)}`;
+    return d;
+  };
+  const dark = '#c9453f', pink = '#ff6f8f';
+  const mouthShape = d => `<path d="${d}" fill="${dark}" stroke="${INK}" stroke-width="2.2" stroke-linejoin="round"/>`;
+
+  /* ---------- 脸色：[高光, 主色, 描边] ---------- */
+  const C = {
+    y: ['#fff176', '#ffd02b', '#ffa800'],
+    r: ['#ff9f8c', '#ff5442', '#e0301f'],
+    g: ['#dcf977', '#8ee02f', '#5fb516'],
+    b: ['#a9e4ff', '#4cb9ff', '#1f92ee'],
+    p: ['#e4b4ff', '#b266ff', '#8a3fe0'],
+    w: ['#ffffff', '#eef1fa', '#c3cbe2'],
+  };
+
+  /* ---------- 眼睛 ---------- */
+  const shineEye = `<ellipse rx="8.5" ry="11.5" fill="${INK}"/><circle cx="3" cy="-4.5" r="4.4" fill="#fff"/><circle cx="-3" cy="4.5" r="2.1" fill="#fff"/>`;
+  const E = {
+    dot:   pair(() => `<ellipse rx="7.5" ry="10.5" fill="${INK}"/><circle cx="2.5" cy="-4" r="3.2" fill="#fff"/>`),
+    tiny:  pair(() => `<circle r="5" fill="${INK}"/>`),
+    shine: pair(() => shineEye),
+    watery: pair(() => `<ellipse rx="11" ry="13.5" fill="${INK}"/><circle cx="3.5" cy="-5.5" r="5.2" fill="#fff"/><circle cx="-4" cy="5.5" r="2.4" fill="#fff"/>`),
+    happy:  pair(() => st('M-10 5Q0 -13 10 5', 6)),
+    closed: pair(() => st('M-10 -3Q0 10 10 -3', 6)),
+    squint: pair(s => st(`M${8 * s} -9L${-8 * s} 0L${8 * s} 9`, 6)),
+    line:   pair(() => st('M-7 0H7', 4.5)),
+    dead:   pair(() => st('M-7 -7L7 7M7 -7L-7 7', 6)),
+    heart:  pair(() => `<path d="${HEART}" fill="#ff3b5c"/>`),
+    star:   pair(() => `<path d="${star(12, 5)}" fill="#ffc400" stroke="#e08a00" stroke-width="1.5" stroke-linejoin="round"/>`),
+    dollar: pair(() => `<text y="1" font-size="22" font-weight="900" text-anchor="middle" dominant-baseline="central" fill="#1f9d55" font-family="system-ui,sans-serif">$<\/text>`),
+    dizzy:  pair(() => `<path d="${spiral()}" fill="none" stroke="${INK}" stroke-width="2.5" stroke-linecap="round"/>`),
+    shock:  pair(() => `<circle r="12.5" fill="#fff" stroke="${INK}" stroke-width="2.6"/><circle r="5" fill="${INK}"/>`),
+    round:  pair(() => `<circle r="11" fill="#fff" stroke="${INK}" stroke-width="2.6"/><circle r="3.6" fill="${INK}"/>`),
+    roll:   pair(() => `<circle r="11" fill="#fff" stroke="${INK}" stroke-width="2.6"/><circle cy="-6" r="4.6" fill="${INK}"/>`),
+    look:   pair(() => `<circle r="11" fill="#fff" stroke="${INK}" stroke-width="2.6"/><circle cx="-4" cy="-5" r="4.6" fill="${INK}"/>`),
+    hollow: pair(() => `<ellipse rx="9" ry="11" fill="${INK}"/>`),
+    unamused: pair(() => `<path d="M-8 0A8 8 0 0 0 8 0Z" fill="${INK}"/>` + st('M-10 0H10', 3.5)),
+    shades: `<rect x="21" y="37" width="26" height="19" rx="8" fill="#4b5068"/><rect x="53" y="37" width="26" height="19" rx="8" fill="#4b5068"/>`
+          + st('M47 41H53M21 42L12 38M79 42L88 38', 3.5, 'stroke="#4b5068"') + st('M27 43H33', 2.5, 'stroke="#fff" opacity=".55"') + st('M59 43H65', 2.5, 'stroke="#fff" opacity=".55"'),
+    wink:  at(35, 45, shineEye) + at(65, 45, st('M-8 2Q0 -8 8 2', 4.5)),
+    crazy: at(35, 45, st('M-7 -7L7 0L-7 7', 4.5))
+         + at(65, 45, `<circle r="10" fill="#fff" stroke="${INK}" stroke-width="2.5"/><circle cx="-1" cy="1" r="3.5" fill="${INK}"/>`),
+  };
+
+  /* ---------- 眉毛（相对眼睛中心） ---------- */
+  const B = {
+    angry: pair(s => st(`M${10 * s} -17L${-8 * s} -8`, 6)),
+    sad:   pair(s => st(`M${10 * s} -8L${-8 * s} -18`, 6)),
+    arch:  pair(() => st('M-9 -15Q0 -24 9 -15', 5)),
+    flat:  pair(() => st('M-8 -15H8', 5)),
+    raise: at(35, 45, st('M-9 -14H9', 5)) + at(65, 45, st('M-9 -22Q0 -30 9 -19', 5)),
+  };
+
+  /* ---------- 嘴 ---------- */
+  const M = {
+    tiny:  st('M38 66Q50 74 62 66'),
+    smile: st('M32 62Q50 80 68 62', 4.5),
+    grin:  mouthShape('M30 60H70C70 76 60 84 50 84C40 84 30 76 30 60Z')
+         + `<path d="M32 61H68C68 67 66 68 64 68H36C34 68 32 67 32 61Z" fill="#fff"/>`
+         + `<path d="M40 80Q50 72 60 80Q58 84 50 84Q42 84 40 80Z" fill="${pink}"/>`,
+    laugh: mouthShape('M24 56H76C76 78 64 90 50 90C36 90 24 78 24 56Z')
+         + `<path d="M26 57H74C74 65 72 66 70 66H30C28 66 26 65 26 57Z" fill="#fff"/>`
+         + `<path d="M38 84Q50 72 62 84Q58 89 50 89Q42 89 38 84Z" fill="${pink}"/>`,
+    o:     mouthShape('M50 63a6 8 0 1 0 .01 0Z'),
+    D:     mouthShape('M50 60a9 12 0 1 0 .01 0Z'),
+    yawn:  mouthShape('M50 60a11 14 0 1 0 .01 0Z') + `<ellipse cx="50" cy="83" rx="7" ry="4" fill="${pink}"/>`,
+    flat:  st('M38 72H62'),
+    frown: st('M34 76Q50 62 66 76', 4.5),
+    pout:  st('M40 74Q50 66 60 74'),
+    smirk: st('M36 70Q52 74 66 62', 4.5),
+    wavy:  st('M30 72Q36 66 42 72T54 72T66 72'),
+    cat:   st('M36 66Q43 76 50 66Q57 76 64 66'),
+    tongue: `<path d="M43 70V79A7 7 0 0 0 57 79V70" fill="#ff6f86" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/>` + st('M32 64Q50 78 68 64', 4.5),
+    kiss:  `<ellipse cx="54" cy="72" rx="5" ry="6" fill="#ff5a7a" stroke="${INK}" stroke-width="2.5"/>`,
+    zip:   `<rect x="28" y="66" width="44" height="9" rx="4.5" fill="#d8dde8" stroke="${INK}" stroke-width="3"/>` + st('M36 66V75M43 66V75M50 66V75M57 66V75M64 66V75', 2),
+    teeth: `<rect x="30" y="62" width="40" height="18" rx="7" fill="#fff" stroke="${INK}" stroke-width="3"/>` + st('M30 71H70M40 62V80M50 62V80M60 62V80', 2),
+    cry:   mouthShape('M32 82Q50 58 68 82Z') + `<path d="M42 81Q50 72 58 81Z" fill="${pink}"/>`,
+    drool: st('M36 64Q50 76 64 64') + `<path d="M62 69Q57 78 62 82Q67 78 62 69Z" fill="#8fd3ff" stroke="#3b9ee0" stroke-width="1.5"/>`,
+    vomit: mouthShape('M50 63a8 9 0 1 0 .01 0Z') + `<path d="M44 78Q42 96 50 94Q58 98 56 78Z" fill="#8bd13a" stroke="#5a9a1a" stroke-width="2"/>`,
+    vomitBig: mouthShape('M50 60a14 15 0 1 0 .01 0Z') + `<ellipse cx="50" cy="85" rx="9" ry="4.5" fill="${pink}"/>`,
+    mask:  `<path d="M22 56H78V68Q78 88 50 88Q22 88 22 68Z" fill="#e6f0fa" stroke="#9db8d2" stroke-width="2.5" stroke-linejoin="round"/>`
+         + st('M26 66H74M26 75H74', 2, 'stroke="#b7cde2"') + st('M22 60Q10 60 6 52M78 60Q90 60 94 52', 2.5, 'stroke="#9db8d2"'),
+  };
+
+  /* ---------- 脸上的附加物 ---------- */
+  const X = {
+    blush:  `<ellipse cx="20" cy="62" rx="12.5" ry="8" fill="#ff3d63" opacity=".7"/><ellipse cx="80" cy="62" rx="12.5" ry="8" fill="#ff3d63" opacity=".7"/>`,
+    blush2: `<ellipse cx="19" cy="62" rx="13" ry="8.5" fill="#ff2e5b" opacity=".8"/><ellipse cx="81" cy="62" rx="13" ry="8.5" fill="#ff2e5b" opacity=".8"/>`,
+    tears:  st('M30 54Q22 70 26 88M70 54Q78 70 74 88', 10, 'stroke="#5bbcff" opacity=".9"'),
+    drops:  `<path d="M26 54Q15 66 26 74Q37 66 26 54ZM74 54Q63 66 74 74Q85 66 74 54Z" fill="#5bbcff" stroke="#2b8fd6" stroke-width="1.5"/>`,
+    jets:   `<path d="M24 46Q8 38 2 48Q8 60 26 54ZM76 46Q92 38 98 48Q92 60 74 54Z" fill="#5bbcff" stroke="#2b8fd6" stroke-width="1.5" stroke-linejoin="round"/>`,
+    snot:   `<circle cx="60" cy="64" r="7" fill="#bfe6ff" stroke="#6cb8f0" stroke-width="2" opacity=".9"/>`,
+    cheeks: st('M24 60Q28 66 34 62', 2.5) + st('M76 60Q72 66 66 62', 2.5),
+    lines:  st('M34 12V26M46 10V28M58 10V28M70 12V26', 3, 'opacity=".7"'),
+    puffy:  `<ellipse cx="17" cy="62" rx="14" ry="10" fill="#4f9a14" opacity=".4"/><ellipse cx="83" cy="62" rx="14" ry="10" fill="#4f9a14" opacity=".4"/>`,
+    nose:   `<path d="M50 56L45 66H55Z" fill="${INK}"/>`,
+  };
+
+  /* ---------- 脸外的附加物（100×100 坐标） ---------- */
+  const heart = (x, y, s) => `<path transform="translate(${x} ${y}) scale(${s})" d="${HEART}" fill="#ff3b5c"/>`;
+  const spark = (x, y, s) => `<path transform="translate(${x} ${y}) scale(${s})" d="M0 -9Q1 -1 9 0Q1 1 0 9Q-1 1 -9 0Q-1 -1 0 -9Z" fill="#ffc400"/>`;
+  const drop = (x, y, s) => `<path transform="translate(${x} ${y}) scale(${s})" d="M0 -10Q-9 2 0 8Q9 2 0 -10Z" fill="#8fd3ff" stroke="#3b9ee0" stroke-width="2"/>`;
+  const O = {
+    sweat:  drop(82, 28, 1.1),
+    sweat2: drop(82, 28, 1) + drop(92, 44, .7),
+    vein:   `<g transform="translate(82 22)" stroke="#e53935" stroke-width="4" fill="none" stroke-linecap="round"><path d="M-9 -4Q-3 -3 -3 -9M9 -4Q3 -3 3 -9M-9 4Q-3 3 -3 9M9 4Q3 3 3 9"/><\/g>`,
+    zzz:    `<g fill="#5a7bd8" font-family="system-ui,sans-serif" font-weight="900"><text x="70" y="28" font-size="20">Z<\/text><text x="84" y="14" font-size="13">z<\/text><\/g>`,
+    hearts: heart(20, 24, .6) + heart(80, 16, .7) + heart(92, 38, .45),
+    heart:  heart(88, 24, .8),
+    sparkle: spark(84, 22, 1) + spark(14, 30, .6) + spark(90, 46, .5),
+    q:      `<text x="82" y="30" font-size="28" font-weight="900" text-anchor="middle" fill="#5a7bd8" font-family="system-ui,sans-serif">?<\/text>`,
+    dots:   `<text x="84" y="30" font-size="24" font-weight="900" text-anchor="middle" fill="#7a7f8e" font-family="system-ui,sans-serif">…<\/text>`,
+    halo:   `<ellipse cx="50" cy="8" rx="22" ry="4.5" fill="none" stroke="#ffc400" stroke-width="4"/>`,
+  };
+  const G = '#a8e83c', GD = '#5ea018', GL = '#d6fb8e';
+  const spit = (sx, sy, d) => `<circle class="spit" style="--sx:${sx}px;--sy:${sy}px;animation-delay:${d}s" cx="50" cy="60" r="3.4" fill="${G}" stroke="${GD}" stroke-width="1.4"/>`;
+  const puke = `
+    <g class="pool">
+      <ellipse cx="50" cy="89" rx="46" ry="9.5" fill="${G}" stroke="${GD}" stroke-width="2"/>
+      <ellipse cx="34" cy="87" rx="9" ry="2.5" fill="${GL}" opacity=".8"/>
+      <circle cx="20" cy="90" r="3" fill="${GL}"/><circle cx="76" cy="92" r="4" fill="${GL}"/><circle cx="64" cy="86" r="2.2" fill="${GL}"/>
+    <\/g>
+    <g class="puke">
+      <path d="M39 55C33 63 41 69 35 77C32 82 24 84 21 90C21 93 30 91 34 90C42 92 58 92 66 90C70 91 79 93 79 90C76 84 68 82 65 77C59 69 67 63 61 55Z" fill="${G}" stroke="${GD}" stroke-width="2" stroke-linejoin="round"/>
+      <path d="M45 62Q41 70 43 78" fill="none" stroke="${GL}" stroke-width="3.5" stroke-linecap="round" opacity=".85"/>
+      <circle cx="58" cy="80" r="2.4" fill="${GL}"/><circle cx="52" cy="70" r="1.8" fill="${GL}"/>
+    <\/g>
+    ${spit(-22, 24, 0)}${spit(22, 24, .02)}${spit(-8, 34, .04)}${spit(10, 36, .06)}${spit(-30, 14, .08)}${spit(30, 14, .1)}
+    ${drop(18, 14, .8)}${drop(86, 18, .7)}`;
+  const horns = `<path d="M14 36L6 2L44 18ZM86 36L94 2L56 18Z" fill="#b07fe0" stroke="#9461cc" stroke-width="1.5" stroke-linejoin="round"/>`;
+
+  /* ---------- 表情清单 ---------- */
+  const SETS = {
+    '开心': [
+      ['微笑',   { e: E.shine, m: M.tiny, x: X.blush }],
+      ['大笑',   { e: E.squint, m: M.laugh }],
+      ['笑哭',   { e: E.squint, m: M.laugh, x: X.jets }],
+      ['吐舌',   { e: E.shine, m: M.tongue }],
+      ['调皮',   { e: E.wink, m: M.tongue }],
+      ['惊喜',   { e: E.shine, b: B.arch, m: M.grin, o: O.sparkle }],
+      ['憋笑',   { e: E.squint, m: M.wavy, x: X.blush, o: O.sweat }],
+    ],
+    '喜爱': [
+      ['天使',   { e: E.shine, m: M.tiny, x: X.blush, o: O.halo }],
+      ['坏笑',   { c: 'p', e: E.shine, b: B.angry, m: M.grin, k: horns }],
+      ['陶醉',   { e: E.closed, m: M.smile, x: X.blush, o: O.hearts }],
+    ],
+    '无语 / 嘲讽': [
+      ['面无表情', { e: E.line, m: M.flat }],
+      ['嫌弃',   { e: E.unamused, b: B.flat, m: M.pout }],
+      ['白眼',   { e: E.roll, m: M.flat }],
+      ['呆住',   { e: E.round, m: M.o }],
+      ['疑惑',   { e: E.dot, b: B.raise, m: M.wavy, o: O.q }],
+      ['思考',   { e: E.look, b: B.raise, m: M.pout }],
+      ['尬笑',   { e: E.dot, b: B.sad, m: M.grin, o: O.sweat }],
+      ['哼',     { e: E.unamused, b: B.angry, m: M.pout }],
+    ],
+    '难过': [
+      ['难过',   { e: E.dot, b: B.sad, m: M.frown }],
+      ['委屈',   { e: E.watery, b: B.sad, m: M.wavy }],
+      ['可怜',   { e: E.watery, b: B.sad, m: M.pout }],
+      ['失落',   { e: E.tiny, b: B.sad, m: M.frown }],
+      ['心累',   { e: E.line, m: M.wavy, o: O.sweat }],
+    ],
+    '愤怒': [
+      ['生气',   { c: 'r', e: E.dot, b: B.angry, m: M.frown, o: O.vein }],
+      ['暴怒',   { c: 'r', e: E.dot, b: B.angry, m: M.teeth, o: O.vein }],
+      ['咒骂',   { c: 'r', e: E.dot, b: B.angry, m: M.D, o: O.vein }],
+      ['不爽',   { e: E.unamused, b: B.angry, m: M.frown }],
+    ],
+    '惊吓': [
+      ['惊恐',   { c: 'b', e: E.shock, b: B.sad, m: M.wavy, o: O.sweat }],
+    ],
+    '状态': [
+      ['恶心',   { c: 'g', t: 'translate(10 -2) scale(.8)', cls: 'shake', e: E.squint, b: B.sad, m: M.vomitBig, x: X.puffy + X.tears, o: puke }],
+    ],
+  };
+
+  /* ---------- 组装 ---------- */
+  const build = ({ c = 'y', t = 'translate(2 2) scale(.96)', cls = '', raw, k = '', x = '', e = '', b = '', m = '', o = '' }) => {
+    const [hi, mid, edge] = C[c], id = 'g' + c;
+    const body = raw || `
+      <g transform="${t}"><g class="${cls}">
+        <circle cx="50" cy="50" r="46" fill="url(#${id})" stroke="${edge}" stroke-width="2.6"/>
+        <ellipse cx="36" cy="20" rx="17" ry="7" fill="#fff" opacity=".6" transform="rotate(-20 36 20)"/>
+        ${x}<g class="eyes">${e}<\/g>${b}${m === M.mask ? m : `<g transform="translate(50 70) scale(1.15) translate(-50 -70)">${m}<\/g>`}
+      <\/g><\/g>`;
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+      <defs><radialGradient id="${id}" cx=".35" cy=".28" r=".85">
+        <stop offset="0" stop-color="${hi}"/><stop offset="1" stop-color="${mid}"/>
+      <\/radialGradient><\/defs>${k}${body}${o}<\/svg>`;
+  };
+
+  /* ---------- passed 分组：从各组中挑出，按此顺序置顶 ---------- */
+  const PASSED = ['微笑', '大笑', '笑哭', '吐舌', '调皮', '惊喜', '憋笑', '天使', '坏笑', '陶醉',
+                  '面无表情', '嫌弃', '白眼', '呆住', '疑惑', '思考', '尬笑', '哼',
+                  '难过', '委屈', '可怜', '失落', '心累', '生气', '暴怒', '咒骂', '不爽', '惊恐', '恶心'];
+  const byName = Object.fromEntries(Object.values(SETS).flat().map(it => [it[0], it]));
+  const GROUPS = { passed: PASSED.map(n => byName[n]) };
+  for (const [k, list] of Object.entries(SETS)) {
+    const rest = list.filter(([n]) => !PASSED.includes(n));
+    if (rest.length) GROUPS[k] = rest;
+  }
+
+  app.innerHTML = Object.entries(GROUPS).map(([title, list]) =>
+    `${title === 'passed' ? '' : `<h2>${title}<\/h2>`}<div class="grid">${
+      list.map(([name, d]) => `<figure aria-label="${name}" style="--d:${(-Math.random() * 2).toFixed(2)}s">${build(d)}<\/figure>`).join('')
+    }<\/div>`).join('');
+
+  /* ---------- 点击复制 SVG ---------- */
+  let timer;
+  app.addEventListener('click', async ev => {
+    const svg = ev.target.closest('figure')?.querySelector('svg');
+    if (!svg) return;
+    try { await navigator.clipboard.writeText(svg.outerHTML); } catch {}
+    toast.classList.add('on');
+    clearTimeout(timer);
+    timer = setTimeout(() => toast.classList.remove('on'), 1200);
+  });
+</script>
