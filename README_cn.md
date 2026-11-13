@@ -4,6 +4,8 @@
 
 一组可爱风大号 emoji。
 
+网页: [imrcpan.com/open-emoji-cute](https://imrcpan.com/open-emoji-cute)
+
 ## 表情一览
 
 |                   预览                    | 文件                 | 中文     |                  预览                   | 文件                | 中文 |
