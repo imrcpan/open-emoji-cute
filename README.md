@@ -4,6 +4,8 @@
 
 A set of cute, oversized emoji.
 
+Website: [imrcpan.com/open-emoji-cute](https://imrcpan.com/open-emoji-cute)
+
 ## The emoji
 
 |                  Preview                  | File                 |                 Preview                 | File                |
