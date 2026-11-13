@@ -75,6 +75,17 @@
     transition: opacity .2s, transform .3s var(--spring); pointer-events: none;
   }
   #toast.on { opacity: 1; transform: translate(-50%, 0); }
+  /* 深色：跟随系统 */
+  @media (prefers-color-scheme: dark) {
+    :root { color-scheme: dark; }
+    body { background: #1f1218; color: #e0aac2; }
+    .sub { color: #a89aa5; }
+    .repo { border-color: #6b3a50; }
+    .repo:hover { border-color: #ff4f86; }
+    h2 { color: #d4739a; }
+    figure { background: #2e1b25; box-shadow: 0 4px 0 #3f2332; }
+    figure:hover { box-shadow: 0 10px 0 #4d2a3d; }
+  }
 </style>
 
 <main>
