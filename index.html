@@ -75,17 +75,25 @@
     transition: opacity .2s, transform .3s var(--spring); pointer-events: none;
   }
   #toast.on { opacity: 1; transform: translate(-50%, 0); }
-  /* 深色：跟随系统 */
+  /* 深色：data-theme 指定，未指定时跟随系统 */
   @media (prefers-color-scheme: dark) {
-    :root { color-scheme: dark; }
-    body { background: #1f1218; color: #e0aac2; }
-    .sub { color: #a89aa5; }
-    .repo { border-color: #6b3a50; }
-    .repo:hover { border-color: #ff4f86; }
-    h2 { color: #d4739a; }
-    figure { background: #2e1b25; box-shadow: 0 4px 0 #3f2332; }
-    figure:hover { box-shadow: 0 10px 0 #4d2a3d; }
+    :root:not([data-theme]) { color-scheme: dark; }
+    :root:not([data-theme]) body { background: #1f1218; color: #e0aac2; }
+    :root:not([data-theme]) .sub { color: #a89aa5; }
+    :root:not([data-theme]) .repo { border-color: #6b3a50; }
+    :root:not([data-theme]) .repo:hover { border-color: #ff4f86; }
+    :root:not([data-theme]) h2 { color: #d4739a; }
+    :root:not([data-theme]) figure { background: #2e1b25; box-shadow: 0 4px 0 #3f2332; }
+    :root:not([data-theme]) figure:hover { box-shadow: 0 10px 0 #4d2a3d; }
   }
+  :root[data-theme='dark'] { color-scheme: dark; }
+  :root[data-theme='dark'] body { background: #1f1218; color: #e0aac2; }
+  :root[data-theme='dark'] .sub { color: #a89aa5; }
+  :root[data-theme='dark'] .repo { border-color: #6b3a50; }
+  :root[data-theme='dark'] .repo:hover { border-color: #ff4f86; }
+  :root[data-theme='dark'] h2 { color: #d4739a; }
+  :root[data-theme='dark'] figure { background: #2e1b25; box-shadow: 0 4px 0 #3f2332; }
+  :root[data-theme='dark'] figure:hover { box-shadow: 0 10px 0 #4d2a3d; }
 </style>
 
 <main>
